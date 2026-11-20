@@ -88,8 +88,21 @@ export function createApp({ apiKey, groqKey, model, requestModel = requestApi })
     }
 
     try {
-      const instructions = 'Explica en español el balance orientativo de estudio en hasta 90 palabras. Usa solo cifras proporcionadas. available son las horas efectivas y middle es la referencia ilustrativa de preparación. hours son horas por semana, months es el plazo, neededMonths es el plazo total estimado al ritmo actual y extraWeekly son horas semanales adicionales estimadas con el plazo actual. Si available alcanza middle, sugiere mantener el plan y revisar el avance. Si faltan horas y constraint es hours, conserva las horas semanales y propone neededMonths. Si es deadline, conserva months y explica extraWeekly como aumento condicional. Si es both, conserva plazo y horas y sugiere un objetivo parcial. Evita pronósticos de aprobado. Devuelve texto sin formato.';
-      const input = JSON.stringify(scenario);
+      const facts = [
+        `Disponibilidad actual: ${scenario.hours} horas semanales durante ${scenario.months} meses.`,
+        `Horas efectivas: ${scenario.available}. Referencia orientativa de preparación: ${scenario.middle} horas.`
+      ];
+      if (scenario.available >= scenario.middle) {
+        facts.push('Consejo: mantener el plan y revisar el progreso real.');
+      } else if (scenario.constraint === 'hours') {
+        facts.push(`Restricción: mantener ${scenario.hours} horas semanales. Consejo: ampliar a unos ${scenario.neededMonths} meses en total, con la misma regularidad.`);
+      } else if (scenario.constraint === 'deadline') {
+        facts.push(`Restricción: mantener el plazo de ${scenario.months} meses. Consejo: si es asumible, dedicar unas ${scenario.hours + scenario.extraWeekly} horas semanales en total (${scenario.extraWeekly} más que ahora), con la misma regularidad. Si no es asumible, fijar un objetivo parcial.`);
+      } else {
+        facts.push('Restricción: mantener las horas semanales y el plazo. Consejo: fijar un objetivo parcial dentro del plazo actual.');
+      }
+      const instructions = 'Redacta en español natural, en un párrafo de hasta 90 palabras. Explica el balance orientativo y comunica el consejo dado. Conserva la restricción, las cifras y sus unidades. Usa exclusivamente los datos y el consejo recibidos. Evita porcentajes nuevos, criterios de revisión no indicados, pronósticos de aprobado y términos técnicos del código.';
+      const input = facts.join(' ');
       const url = useGroq ? 'https://api.groq.com/openai/v1/chat/completions' : 'https://api.openai.com/v1/responses';
       const payload = useGroq ? {
         model,
