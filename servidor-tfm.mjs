@@ -25,6 +25,7 @@ function requestApi(url, { timeout, body, ...options }) {
       response.on('data', chunk => { text += chunk; });
       response.on('error', reject);
       response.on('end', () => resolve({
+        status: response.statusCode,
         ok: response.statusCode >= 200 && response.statusCode < 300,
         json: () => JSON.parse(text)
       }));
@@ -77,12 +78,15 @@ export function createApp({ apiKey, model = 'gpt-4.1-mini', requestModel = reque
     } catch {
       return reply(response, 400, { error: 'Escenario no válido' });
     }
-    if (!apiKey) return reply(response, 503, { error: 'Modelo sin configurar' });
+    if (!apiKey?.trim()) {
+      console.error('[OpoViable] Falta OPENAI_API_KEY en el servidor.');
+      return reply(response, 503, { error: 'Modelo sin configurar' });
+    }
 
     try {
       const result = await requestModel('https://api.openai.com/v1/responses', {
         method: 'POST',
-        headers: { Authorization: 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
+        headers: { Authorization: 'Bearer ' + apiKey.trim(), 'Content-Type': 'application/json' },
         timeout: 20000,
         body: JSON.stringify({
           model,
@@ -92,17 +96,22 @@ export function createApp({ apiKey, model = 'gpt-4.1-mini', requestModel = reque
           input: JSON.stringify(scenario)
         })
       });
-      if (!result.ok) return reply(response, 502, { error: 'El proveedor rechazó la solicitud' });
+      if (!result.ok) {
+        console.error('[OpoViable] OpenAI respondió con HTTP ' + result.status + '.');
+        return reply(response, 502, { error: 'El proveedor rechazó la solicitud' });
+      }
       const data = await result.json();
       const explanation = (data.output ?? []).filter(item => item.type === 'message')
         .flatMap(item => item.content)
         .filter(part => part.type === 'output_text')
         .map(part => part.text).join('\n').trim();
       if (!explanation || data.status !== 'completed') {
+        console.error('[OpoViable] El modelo devolvió una respuesta incompleta.');
         return reply(response, 502, { error: 'Respuesta incompleta' });
       }
       return reply(response, 200, { explanation });
     } catch {
+      console.error('[OpoViable] Falló la conexión con OpenAI o la lectura de la respuesta.');
       return reply(response, 502, { error: 'El modelo no está disponible' });
     }
   });
