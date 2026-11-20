@@ -71,7 +71,18 @@ body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-seri
 <div><label class="mb-2 block text-sm font-bold" for="paginas">Páginas nuevas que puedes estudiar en una hora</label><select class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" id="paginas"><option value="1">1 página/hora</option><option value="2">2 páginas/hora</option><option selected="" value="3">3 páginas/hora</option><option value="4">4 páginas/hora</option><option value="5">5 páginas/hora</option><option value="6">6 páginas/hora</option><option value="8">8 páginas/hora</option></select><p class="mt-2 text-xs leading-5 text-slate-500">Piensa en páginas que realmente comprendes y recuerdas, no solo en lectura rápida. La estimación también contempla repasos y práctica.</p></div>
 <button class="w-full rounded-full bg-navy px-6 py-4 font-extrabold text-white transition hover:bg-teal hover:text-navy" type="submit">Ver mi evaluación de viabilidad →</button>
 </form><p class="mt-5 flex items-start gap-2 text-xs leading-5 text-slate-500"><span aria-hidden="true">🔒</span><span>Los datos de este simulador se procesan en tu navegador. No se envían a Google Sheets ni se guardan en un servidor por este formulario.</span></p></div>
-<div class="rounded-2xl border border-teal-700/30 bg-white p-5 sm:p-6"><p class="text-sm font-semibold text-teal-800">Horas necesarias estimadas para preparar el temario y las pruebas</p><p class="mt-2 text-3xl font-extrabold" id="requiredHours">—</p><p class="mt-2 text-xs leading-5 text-slate-700" id="requiredNote"></p></div><section aria-live="polite" aria-atomic="true" class="overflow-hidden rounded-3xl border-2 border-teal-600 bg-gradient-to-br from-teal-50 via-white to-amber-50 p-6 shadow-xl sm:p-8" id="balanceCard"><div class="flex flex-wrap items-center justify-between gap-3"><p class="text-sm font-extrabold uppercase tracking-widest text-teal-800">Tu conclusión personalizada</p><span class="rounded-full bg-slate-800 px-4 py-2 text-sm font-bold text-white" id="balanceStatus">Calculando…</span></div><h3 class="mt-3 font-display text-2xl font-extrabold leading-tight text-slate-900 sm:text-3xl">Balance para tu plazo</h3><p class="mt-4 text-lg font-semibold leading-8 text-slate-900" id="balance"></p><div class="mt-5 rounded-2xl border border-teal-200 bg-white p-5"><h4 class="font-extrabold text-teal-900">¿Qué puedes hacer para mejorar tu escenario?</h4><p class="mt-2 text-base leading-7 text-slate-800" id="balanceAdvice"></p></div><p class="mt-4 text-sm leading-6 text-slate-700" id="timeToGoal"></p><p class="mt-3 text-xs leading-5 text-slate-600">Esta valoración compara horas estimadas, no probabilidades de aprobar. No mide la calidad del estudio, el nivel de competencia ni la dificultad real de la convocatoria.</p></section><div aria-live="polite" class="rounded-3xl bg-navy p-6 text-white soft-shadow sm:p-9"><div class="flex items-center justify-between"><h3 class="font-display text-xl font-extrabold">Tu proyección</h3><span class="rounded-full border border-white/25 px-3 py-1 text-xs text-teal-200">Orientativa</span></div><p class="mt-8 text-sm text-slate-300">Horas estimadas de estudio efectivo</p><div class="mt-2 flex items-baseline gap-3"><strong class="font-display text-6xl font-extrabold tracking-tight text-teal-300" id="totalHoras">468</strong><span class="text-lg text-slate-300">horas</span></div><p class="mt-2 text-sm text-slate-300" id="formula">12 h/semana × 52 semanas × 75 % de regularidad</p>
+<div class="rounded-2xl border border-teal-700/30 bg-white p-5 sm:p-6"><p class="text-sm font-semibold text-teal-800">Horas necesarias estimadas para preparar el temario y las pruebas</p><p class="mt-2 text-3xl font-extrabold" id="requiredHours">—</p><p class="mt-2 text-xs leading-5 text-slate-700" id="requiredNote"></p></div><section aria-live="polite" aria-atomic="true" class="overflow-hidden rounded-3xl border-2 border-teal-600 bg-gradient-to-br from-teal-50 via-white to-amber-50 p-6 shadow-xl sm:p-8" id="balanceCard"><div class="flex flex-wrap items-center justify-between gap-3"><p class="text-sm font-extrabold uppercase tracking-widest text-teal-800">Tu conclusión personalizada</p><span class="rounded-full bg-slate-800 px-4 py-2 text-sm font-bold text-white" id="balanceStatus">Calculando…</span></div><h3 class="mt-3 font-display text-2xl font-extrabold leading-tight text-slate-900 sm:text-3xl">Balance para tu plazo</h3><p class="mt-4 text-lg font-semibold leading-8 text-slate-900" id="balance"></p><div class="mt-5 rounded-2xl border border-teal-200 bg-white p-5"><h4 class="font-extrabold text-teal-900">¿Qué puedes hacer para mejorar tu escenario?</h4><p class="mt-2 text-base leading-7 text-slate-800" id="balanceAdvice"></p></div><p class="mt-4 text-sm leading-6 text-slate-700" id="timeToGoal"></p><p class="mt-3 text-xs leading-5 text-slate-600">Esta valoración compara horas estimadas, no probabilidades de aprobar. No mide la calidad del estudio, el nivel de competencia ni la dificultad real de la convocatoria.</p></section><section class="rounded-3xl border border-teal-200 bg-white p-6" aria-labelledby="adjustmentTitle">
+  <h3 class="font-display text-xl font-extrabold" id="adjustmentTitle">Ajusta tu plan a tus límites</h3>
+  <label for="fixedConstraint" class="mt-4 block text-sm font-bold">¿Qué necesitas mantener?</label>
+  <select id="fixedConstraint" class="mt-2 w-full rounded-xl border border-slate-300 p-3">
+    <option value="">Elige una opción</option>
+    <option value="hours">Mis horas semanales</option>
+    <option value="deadline">Mi plazo de preparación</option>
+    <option value="both">Mis horas semanales y mi plazo</option>
+  </select>
+  <p id="constraintAdvice" aria-live="polite" class="mt-4 leading-7 text-slate-800"></p>
+</section>
+<div aria-live="polite" class="rounded-3xl bg-navy p-6 text-white soft-shadow sm:p-9"><div class="flex items-center justify-between"><h3 class="font-display text-xl font-extrabold">Tu proyección</h3><span class="rounded-full border border-white/25 px-3 py-1 text-xs text-teal-200">Orientativa</span></div><p class="mt-8 text-sm text-slate-300">Horas estimadas de estudio efectivo</p><div class="mt-2 flex items-baseline gap-3"><strong class="font-display text-6xl font-extrabold tracking-tight text-teal-300" id="totalHoras">468</strong><span class="text-lg text-slate-300">horas</span></div><p class="mt-2 text-sm text-slate-300" id="formula">12 h/semana × 52 semanas × 75 % de regularidad</p>
 <div class="mt-9 border-t border-white/20 pt-7"><h4 class="font-bold">Compara otros ritmos</h4><div class="mt-5 space-y-5" id="scenarios"></div></div>
 <div class="mt-8 rounded-2xl border border-white/20 bg-white/10 p-5"><h4 class="font-extrabold text-teal-200">¿Qué significa este resultado?</h4><p class="mt-2 text-sm leading-7 text-slate-200">Son <strong>horas de planificación ilustrativas</strong>, no datos oficiales ni una predicción de aprobado. La carga depende del temario real, modalidad de examen, especialidad, convocatorias, material y experiencia. El cálculo incluye supuestos de repaso y práctica; verifica siempre las bases de tu convocatoria.</p></div>
 <button class="mt-6 text-sm font-semibold text-white underline underline-offset-4 hover:text-teal-200" id="resetSim" type="button">Restablecer valores</button></div>
@@ -137,7 +148,7 @@ function estimate(){
  const effectiveWeekly=hours*regularity;
  const neededMonths=Math.ceil(middle/effectiveWeekly*12/52);
  const extraWeekly=Math.max(0,Math.ceil(middle/weeks/regularity-hours));
- const deficit=Math.max(0,middle-available);
+
  let message,advice,status,cardClasses,badgeClasses;
  if(ratio<.7){
    status='Necesita ajustes';
@@ -158,6 +169,20 @@ function estimate(){
    cardClasses='border-emerald-600 bg-gradient-to-br from-emerald-50 via-white to-teal-50';
    badgeClasses='bg-emerald-800 text-white';
  }
+ const constraint=el('fixedConstraint').value;
+ const currentShare=Math.round(ratio*100);
+ const coverage=`Tu plan aporta ${fmt.format(available)} h de estudio efectivo, alrededor del ${currentShare} % de la referencia orientativa de ${fmt.format(middle)} h.`;
+ let adjustment='';
+ if(constraint && ratio>=1){
+   adjustment=`${coverage} Puedes mantener el plazo y las horas semanales. Revisa tu avance tras unas semanas para decidir si necesitas ajustar el plan.`;
+ }else if(constraint==='hours'){
+   adjustment=`${coverage} Si mantienes ${hours} h semanales y la misma regularidad, llegar a la referencia requeriría unos ${neededMonths} meses en total.`;
+ }else if(constraint==='deadline'){
+   adjustment=`${coverage} Para alcanzar la referencia en ${months} meses necesitarías unas ${hours+extraWeekly} h semanales con la misma regularidad. Si ese ritmo supera tu disponibilidad, fija un objetivo parcial para este plazo.`;
+ }else if(constraint==='both'){
+   adjustment=`${coverage} Con ambos límites, plantéate un objetivo parcial para el plazo actual y revisa el avance antes de fijar la siguiente etapa.`;
+ }
+ el('constraintAdvice').textContent=adjustment;
  el('balance').textContent=message;
  el('balanceAdvice').textContent=advice;
  el('balanceStatus').textContent=status;
@@ -180,7 +205,8 @@ function estimate(){
 }
 f.addEventListener('submit',event=>{event.preventDefault();estimate();el('requiredHours').scrollIntoView({behavior:'smooth',block:'center'});});
 for(const input of f.querySelectorAll('input,select'))input.addEventListener('input',estimate);
-el('resetSim').addEventListener('click',()=>{f.reset();sel.value='gsi';estimate();});
+el('fixedConstraint').addEventListener('change',estimate);
+el('resetSim').addEventListener('click',()=>{f.reset();sel.value='gsi';el('fixedConstraint').value='';estimate();});
 el('year').textContent=new Date().getFullYear();
 document.querySelectorAll('img[data-fallback]').forEach(img=>img.addEventListener('error',()=>{if(!img.dataset.retried){img.dataset.retried='1';img.src=img.dataset.fallback;}}));
 estimate();
