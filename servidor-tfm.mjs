@@ -37,7 +37,11 @@ function requestApi(url, { timeout, body, ...options }) {
   });
 }
 
-export function createApp({ apiKey, model = 'gpt-4.1-mini', requestModel = requestApi }) {
+export function createApp({ apiKey, groqKey, model, requestModel = requestApi }) {
+  const useGroq = Boolean(groqKey?.trim());
+  const key = useGroq ? groqKey : apiKey;
+  const provider = useGroq ? 'Groq' : 'OpenAI';
+  model ??= useGroq ? 'openai/gpt-oss-20b' : 'gpt-4.1-mini';
   return createServer(async (request, response) => {
     const path = new URL(request.url, 'http://localhost').pathname;
     if (request.method === 'GET') {
@@ -78,46 +82,49 @@ export function createApp({ apiKey, model = 'gpt-4.1-mini', requestModel = reque
     } catch {
       return reply(response, 400, { error: 'Escenario no válido' });
     }
-    if (!apiKey?.trim()) {
-      console.error('[OpoViable] Falta OPENAI_API_KEY en el servidor.');
+    if (!key?.trim()) {
+      console.error('[OpoViable] Falta GROQ_API_KEY u OPENAI_API_KEY en el servidor.');
       return reply(response, 503, { error: 'Modelo sin configurar' });
     }
 
     try {
-      const result = await requestModel('https://api.openai.com/v1/responses', {
+      const instructions = 'Explica en español el balance orientativo de estudio en hasta 90 palabras. Usa solo cifras proporcionadas. available son las horas efectivas y middle es la referencia ilustrativa de preparación. hours son horas por semana, months es el plazo, neededMonths es el plazo total estimado al ritmo actual y extraWeekly son horas semanales adicionales estimadas con el plazo actual. Si available alcanza middle, sugiere mantener el plan y revisar el avance. Si faltan horas y constraint es hours, conserva las horas semanales y propone neededMonths. Si es deadline, conserva months y explica extraWeekly como aumento condicional. Si es both, conserva plazo y horas y sugiere un objetivo parcial. Evita pronósticos de aprobado. Devuelve texto sin formato.';
+      const input = JSON.stringify(scenario);
+      const url = useGroq ? 'https://api.groq.com/openai/v1/chat/completions' : 'https://api.openai.com/v1/responses';
+      const payload = useGroq ? {
+        model,
+        max_completion_tokens: 800,
+        reasoning_effort: 'low',
+        messages: [{ role: 'system', content: instructions }, { role: 'user', content: input }]
+      } : { model, store: false, max_output_tokens: 300, instructions, input };
+      const result = await requestModel(url, {
         method: 'POST',
-        headers: { Authorization: 'Bearer ' + apiKey.trim(), 'Content-Type': 'application/json' },
+        headers: { Authorization: 'Bearer ' + key.trim(), 'Content-Type': 'application/json' },
         timeout: 20000,
-        body: JSON.stringify({
-          model,
-          store: false,
-          max_output_tokens: 300,
-          instructions: 'Explica en español el balance orientativo de estudio en hasta 90 palabras. Usa solo cifras proporcionadas. available son las horas efectivas y middle es la referencia ilustrativa de preparación. hours son horas por semana, months es el plazo, neededMonths es el plazo total estimado al ritmo actual y extraWeekly son horas semanales adicionales estimadas con el plazo actual. Si available alcanza middle, sugiere mantener el plan y revisar el avance. Si faltan horas y constraint es hours, conserva las horas semanales y propone neededMonths. Si es deadline, conserva months y explica extraWeekly como aumento condicional. Si es both, conserva plazo y horas y sugiere un objetivo parcial. Evita pronósticos de aprobado. Devuelve texto sin formato.',
-          input: JSON.stringify(scenario)
-        })
+        body: JSON.stringify(payload)
       });
       if (!result.ok) {
-        console.error('[OpoViable] OpenAI respondió con HTTP ' + result.status + '.');
+        console.error('[OpoViable] ' + provider + ' respondió con HTTP ' + result.status + '.');
         return reply(response, 502, { error: 'El proveedor rechazó la solicitud' });
       }
       const data = await result.json();
-      const explanation = (data.output ?? []).filter(item => item.type === 'message')
+      const explanation = useGroq ? data.choices?.[0]?.message?.content?.trim() : (data.output ?? []).filter(item => item.type === 'message')
         .flatMap(item => item.content)
         .filter(part => part.type === 'output_text')
         .map(part => part.text).join('\n').trim();
-      if (!explanation || data.status !== 'completed') {
+      if (!explanation || (useGroq ? data.choices[0].finish_reason !== 'stop' : data.status !== 'completed')) {
         console.error('[OpoViable] El modelo devolvió una respuesta incompleta.');
         return reply(response, 502, { error: 'Respuesta incompleta' });
       }
       return reply(response, 200, { explanation });
     } catch {
-      console.error('[OpoViable] Falló la conexión con OpenAI o la lectura de la respuesta.');
+      console.error('[OpoViable] Falló la conexión con ' + provider + ' o la lectura de la respuesta.');
       return reply(response, 502, { error: 'El modelo no está disponible' });
     }
   });
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-  createApp({ apiKey: process.env.OPENAI_API_KEY, model: process.env.OPENAI_MODEL })
+  createApp({ apiKey: process.env.OPENAI_API_KEY, groqKey: process.env.GROQ_API_KEY, model: process.env.GROQ_API_KEY?.trim() ? process.env.GROQ_MODEL : process.env.OPENAI_MODEL })
     .listen(8000, '127.0.0.1', () => console.log('OpoViable TFM disponible en http://127.0.0.1:8000/'));
 }
