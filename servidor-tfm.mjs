@@ -1,5 +1,6 @@
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'node:http';
+import { request as requestHttps } from 'node:https';
 import { readFile } from 'node:fs/promises';
 
 const numberFields = ['hours', 'months', 'available', 'middle', 'neededMonths', 'extraWeekly'];
@@ -16,7 +17,26 @@ function reply(response, status, data) {
   response.end(JSON.stringify(data));
 }
 
-export function createApp({ apiKey, model = 'gpt-4.1-mini', requestModel = fetch }) {
+function requestApi(url, { timeout, body, ...options }) {
+  return new Promise((resolve, reject) => {
+    const request = requestHttps(url, options, response => {
+      let text = '';
+      response.setEncoding('utf8');
+      response.on('data', chunk => { text += chunk; });
+      response.on('error', reject);
+      response.on('end', () => resolve({
+        ok: response.statusCode >= 200 && response.statusCode < 300,
+        json: () => JSON.parse(text)
+      }));
+    });
+    const timer = setTimeout(() => request.destroy(new Error('Tiempo de espera agotado')), timeout);
+    request.on('close', () => clearTimeout(timer));
+    request.on('error', reject);
+    request.end(body);
+  });
+}
+
+export function createApp({ apiKey, model = 'gpt-4.1-mini', requestModel = requestApi }) {
   return createServer(async (request, response) => {
     const path = new URL(request.url, 'http://localhost').pathname;
     if (request.method === 'GET') {
@@ -63,7 +83,7 @@ export function createApp({ apiKey, model = 'gpt-4.1-mini', requestModel = fetch
       const result = await requestModel('https://api.openai.com/v1/responses', {
         method: 'POST',
         headers: { Authorization: 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
-        signal: AbortSignal.timeout(20000),
+        timeout: 20000,
         body: JSON.stringify({
           model,
           store: false,
