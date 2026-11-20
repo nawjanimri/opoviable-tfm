@@ -1,0 +1,94 @@
+import { fileURLToPath } from 'node:url';
+import { createServer } from 'node:http';
+import { readFile } from 'node:fs/promises';
+
+const numberFields = ['hours', 'months', 'available', 'middle', 'neededMonths', 'extraWeekly'];
+const mimeTypes = {
+  html: 'text/html; charset=utf-8',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  webp: 'image/webp'
+};
+
+function reply(response, status, data) {
+  response.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
+  response.end(JSON.stringify(data));
+}
+
+export function createApp({ apiKey, model = 'gpt-4.1-mini', requestModel = fetch }) {
+  return createServer(async (request, response) => {
+    const path = new URL(request.url, 'http://localhost').pathname;
+    if (request.method === 'GET') {
+      const file = path === '/' ? '/index.html' : path;
+      if (!/^\/(?:index\.html|privacidad\.html|imagenes\/[\w.-]+\.(?:jpe?g|png|webp))$/i.test(file)) {
+        return reply(response, 404, { error: 'Página no encontrada' });
+      }
+      try {
+        const bytes = await readFile(new URL('.' + file, import.meta.url));
+        response.writeHead(200, { 'Content-Type': mimeTypes[file.split('.').pop().toLowerCase()] });
+        return response.end(bytes);
+      } catch {
+        return reply(response, 404, { error: 'Archivo no encontrado' });
+      }
+    }
+    if (path !== '/api/explain' || request.method !== 'POST') {
+      return reply(response, 404, { error: 'Ruta no encontrada' });
+    }
+    if (request.headers['content-type'] !== 'application/json') {
+      return reply(response, 415, { error: 'Se requiere JSON' });
+    }
+
+    let scenario;
+    try {
+      let body = '';
+      for await (const chunk of request) {
+        body += chunk;
+        if (body.length > 2048) return reply(response, 413, { error: 'Solicitud demasiado grande' });
+      }
+      const input = JSON.parse(body);
+      if (!input || !['hours', 'deadline', 'both'].includes(input.constraint) ||
+          !numberFields.every(field => Number.isSafeInteger(input[field]) && input[field] >= 0) ||
+          !input.hours || !input.months || !input.middle || !input.neededMonths) {
+        return reply(response, 400, { error: 'Escenario no válido' });
+      }
+      scenario = { constraint: input.constraint };
+      for (const field of numberFields) scenario[field] = input[field];
+    } catch {
+      return reply(response, 400, { error: 'Escenario no válido' });
+    }
+    if (!apiKey) return reply(response, 503, { error: 'Modelo sin configurar' });
+
+    try {
+      const result = await requestModel('https://api.openai.com/v1/responses', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(20000),
+        body: JSON.stringify({
+          model,
+          store: false,
+          max_output_tokens: 300,
+          instructions: 'Explica en español el balance orientativo de estudio en hasta 90 palabras. Usa solo cifras proporcionadas. available son las horas efectivas y middle es la referencia ilustrativa de preparación. hours son horas por semana, months es el plazo, neededMonths es el plazo total estimado al ritmo actual y extraWeekly son horas semanales adicionales estimadas con el plazo actual. Si available alcanza middle, sugiere mantener el plan y revisar el avance. Si faltan horas y constraint es hours, conserva las horas semanales y propone neededMonths. Si es deadline, conserva months y explica extraWeekly como aumento condicional. Si es both, conserva plazo y horas y sugiere un objetivo parcial. Evita pronósticos de aprobado. Devuelve texto sin formato.',
+          input: JSON.stringify(scenario)
+        })
+      });
+      if (!result.ok) return reply(response, 502, { error: 'El proveedor rechazó la solicitud' });
+      const data = await result.json();
+      const explanation = (data.output ?? []).filter(item => item.type === 'message')
+        .flatMap(item => item.content)
+        .filter(part => part.type === 'output_text')
+        .map(part => part.text).join('\n').trim();
+      if (!explanation || data.status !== 'completed') {
+        return reply(response, 502, { error: 'Respuesta incompleta' });
+      }
+      return reply(response, 200, { explanation });
+    } catch {
+      return reply(response, 502, { error: 'El modelo no está disponible' });
+    }
+  });
+}
+
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  createApp({ apiKey: process.env.OPENAI_API_KEY, model: process.env.OPENAI_MODEL })
+    .listen(8000, '127.0.0.1', () => console.log('OpoViable TFM disponible en http://127.0.0.1:8000/'));
+}
