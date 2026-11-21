@@ -93,7 +93,7 @@ export function createApp({ apiKey, groqKey, model, requestModel = requestApi })
         `Horas efectivas: ${scenario.available}. Referencia orientativa de preparación: ${scenario.middle} horas.`
       ];
       if (scenario.available >= scenario.middle) {
-        facts.push('Consejo: mantener el plan y revisar el progreso real.');
+        facts.push('Consejo: según la estimación, es razonable mantener el plan. Revisar el progreso tras unas semanas para decidir si conviene ajustarlo.');
       } else if (scenario.constraint === 'hours') {
         facts.push(`Restricción: mantener ${scenario.hours} horas semanales. Consejo: ampliar a unos ${scenario.neededMonths} meses en total, con la misma regularidad.`);
       } else if (scenario.constraint === 'deadline') {
@@ -101,7 +101,7 @@ export function createApp({ apiKey, groqKey, model, requestModel = requestApi })
       } else {
         facts.push('Restricción: mantener las horas semanales y el plazo. Consejo: fijar un objetivo parcial dentro del plazo actual.');
       }
-      const instructions = 'Redacta en español natural, en un párrafo de hasta 90 palabras. Explica el balance orientativo y comunica el consejo dado. Conserva la restricción, las cifras y sus unidades. Usa exclusivamente los datos y el consejo recibidos. Evita porcentajes nuevos, criterios de revisión no indicados, pronósticos de aprobado y términos técnicos del código.';
+      const instructions = 'Redacta en español natural, en un párrafo de hasta 90 palabras. Explica el balance orientativo y comunica el consejo dado. Conserva la restricción, las cifras y sus unidades. Usa exclusivamente los datos y el consejo recibidos. Evita porcentajes nuevos, criterios de revisión no indicados, pronósticos de aprobado y términos técnicos del código. Presenta el balance como una estimación orientativa del tiempo de estudio. Evita expresiones de garantía sobre alcanzar objetivos, sobre la calidad de la preparación o sobre la ausencia de imprevistos.';
       const input = facts.join(' ');
       const url = useGroq ? 'https://api.groq.com/openai/v1/chat/completions' : 'https://api.openai.com/v1/responses';
       const payload = useGroq ? {
